@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const pageCache = {
 	maxAge: 86_400, // 1日
 	swr: 604_800, // 更新中は古いページを最大7日表示
-	tags: ["posts", "pages", "emdash:taxonomy:category", "emdash:widget-area:sidebar", "emdash:settings", "emdash:menu:top", "all"],
+	tags: ["posts", "pages", "emdash:taxonomy:category", "emdash:widget-area:sidebar", "emdash:settings", "emdash:menu:menu1", "all"],
 };
 
 export default defineConfig({

@@ -3,7 +3,7 @@
 import { getMenu } from "emdash";
 import { MENU, type MenuItem } from "./site";
 
-export const MENU_NAME = "top"; // 管理画面の「メニュー」→ WordPress から取り込んだ「top」
+export const MENU_NAME = "menu1"; // 管理画面の「メニュー」→ WordPress から取り込んだ「menu1」
 const SELF = /^https?:\/\/(fx2\.iwonderful\.okinawa|fx2-iwonderful-okinawa\.delta-a\.workers\.dev)/i;
 
 function normalize(url: string | undefined): string {
