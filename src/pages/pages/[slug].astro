@@ -62,7 +62,8 @@ if (restricted && access.allowed) {
 			const lv = entry ? pageLevel(entry.data) : null;
 			if (lv === null) continue;
 			nextHref = f.href;
-			nextLabel = lv === pageLevel(page.data) ? "次はこのページに進みましょう" : `次は Level.${lv} です`;
+			const t = entry?.data?.title ?? f.label;
+			nextLabel = lv === pageLevel(page.data) ? `次は「${t}」に進みましょう` : `Level.${pageLevel(page.data)} はここまでです。次は Level.${lv} の「${t}」に進みましょう`;
 			break;
 		}
 	}
