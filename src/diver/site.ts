@@ -10,6 +10,7 @@ export const SITE = {
 	googleTag: "", // Googleアナリティクス（入れると有効）
 	cfBeaconToken: "", // Cloudflare Web Analytics（アクセス解析）のトークン
 	stickyPostId: "", // トップページの先頭に固定表示する記事
+	memberLogin: "/level-0/", // ヘッダーに「会員ログイン」を出し、ログイン後にこのページへ戻す
 	sorryPage: "sorry", // 会員でない人・レベルが足りない人に見せる固定ページ（WordPress の「ごめんなさい」）
 };
 

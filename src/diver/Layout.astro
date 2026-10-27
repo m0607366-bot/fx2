@@ -88,7 +88,13 @@ const MENU = await getSiteMenu();
 			<div class="d-header__inner">
 				<label class="d-drawer-btn" for="d-drawer" aria-label="メニュー"><span></span></label>
 				<a href="/" class="d-logo">{SITE.title}</a>
-				{isLoggedIn && (
+				{/* fx2: 会員ログイン（会員はメールのリンクでログインし、Level.0 の目次へ戻る） */}
+				{(SITE as any).memberLogin && (
+					<span class="d-admin d-member-login">
+						<a href={`/_emdash/admin/login?redirect=${encodeURIComponent((SITE as any).memberLogin)}`}>会員ログイン</a>
+					</span>
+				)}
+				{isLoggedIn && Number((Astro.locals.user as any)?.role ?? 0) >= 40 && (
 					<span class="d-admin">
 						<a href="/category-editor/">カテゴリー並べ替え</a>
 						<a href="/_emdash/admin">管理画面</a>
