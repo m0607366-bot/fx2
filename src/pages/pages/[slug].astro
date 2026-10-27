@@ -4,10 +4,9 @@ import { getEmDashEntry, getSeoMeta, decodeSlug } from "emdash";
 import { PortableText } from "emdash/ui";
 import Layout from "../../diver/Layout.astro";
 import Breadcrumb from "../../diver/Breadcrumb.astro";
-import { SITE, slugCandidates, slugUrl } from "../../diver/site";
+import { SITE, slugCandidates, slugUrl, COURSE_ORDER } from "../../diver/site";
+import { Image } from "emdash/ui";
 import { checkAccess, pageLevel } from "../../diver/access";
-import { getSiteMenu } from "../../diver/menu";
-import LinkCard from "../../diver/LinkCard.astro";
 
 const slug = decodeSlug(Astro.params.slug);
 if (!slug) return Astro.rewrite("/404");
@@ -38,34 +37,34 @@ if (restricted) {
 	if (!access.allowed) sorry = (await getEmDashEntry("pages", (SITE as any).sorryPage ?? "sorry")).entry;
 } else if (!isPreview && Astro.cache?.enabled) Astro.cache.set(cacheHint);
 
-// 講習のページ: メニューの並び順で「次はこのページへ」（カード）と「前のページ」を出す
-let nextHref: string | null = null;
-let nextLabel = "";
-let prev: { href: string; label: string } | null = null;
+// 講習のページ: 決まった順番（site.ts の COURSE_ORDER）で「次はこのページへ」（カード）と「前のページ」を出す
+let next: { href: string; title: string; image: any; label: string } | null = null;
+let prev: { href: string; title: string } | null = null;
 if (restricted && access.allowed) {
-	const flat: Array<{ href: string; label: string }> = [];
-	const walk = (items: any[]) => {
-		for (const it of items) {
-			if (it.href && it.href.startsWith("/") && it.href !== "/" && !flat.some((f) => f.href === it.href)) flat.push({ href: it.href, label: it.label });
-			if (it.children) walk(it.children);
+	const order: string[] = (SITE as any).courseOrder ?? COURSE_ORDER;
+	const i = order.findIndex((s) => s === stored || s === slug || decodeURIComponent(s) === slug);
+	const find = async (from: number, step: number) => {
+		for (let j = from; j >= 0 && j < order.length; j += step) {
+			const { entry } = await getEmDashEntry("pages", order[j]);
+			if (entry && pageLevel(entry.data) !== null) return { entry, s: order[j] };
 		}
+		return null;
 	};
-	walk(await getSiteMenu());
-	const here = slugUrl(stored);
-	const i = flat.findIndex((f) => f.href === here || decodeURI(f.href) === decodeURI(here));
 	if (i >= 0) {
-		if (i > 0) prev = flat[i - 1];
-		// 次の講習ページ（会員レベルのあるページ）を探す
-		for (const f of flat.slice(i + 1)) {
-			const s = f.href.replace(/^\/|\/$/g, "");
-			const { entry } = await getEmDashEntry("pages", s);
-			const lv = entry ? pageLevel(entry.data) : null;
-			if (lv === null) continue;
-			nextHref = f.href;
-			const t = entry?.data?.title ?? f.label;
-			nextLabel = lv === pageLevel(page.data) ? `次は「${t}」に進みましょう` : `Level.${pageLevel(page.data)} はここまでです。次は Level.${lv} の「${t}」に進みましょう`;
-			break;
+		const f = await find(i + 1, 1);
+		if (f) {
+			const n = f.entry;
+			const lv = pageLevel(n.data);
+			const here = pageLevel(page.data);
+			next = {
+				href: slugUrl(f.s),
+				title: n.data.title,
+				image: n.data.featured_image ?? null,
+				label: lv === here ? `次は「${n.data.title}」に進みましょう` : `Level.${here} はここまでです。次は Level.${lv} の「${n.data.title}」に進みましょう`,
+			};
 		}
+		const b = i > 0 ? await find(i - 1, -1) : null;
+		if (b) prev = { href: slugUrl(b.s), title: b.entry.data.title };
 	}
 }
 
@@ -86,13 +85,23 @@ const seo = getSeoMeta(page, { siteTitle: SITE.title, siteUrl: Astro.url.origin,
 			access.allowed ? (
 				<div class="d-content" {...page.edit.content}>
 					<PortableText value={page.data.content} components={ptComponents} />
-					{nextHref && (
+					{next && (
 						<div class="d-next">
-							<p class="d-next__label">{nextLabel}</p>
-							<LinkCard url={`${Astro.url.origin}${nextHref}`} />
+							<p class="d-next__label">{next.label}</p>
+							<a href={next.href} class="d-linkcard">
+								{next.image && (
+									<span class="d-linkcard__thumb">
+										{next.image.provider === "external" && next.image.src ? <img src={next.image.src} alt="" loading="lazy" /> : <Image image={next.image} sizes="240px" />}
+									</span>
+								)}
+								<span class="d-linkcard__body">
+									<span class="d-linkcard__title">{next.title}</span>
+									<span class="d-linkcard__site">次のページへ進む →</span>
+								</span>
+							</a>
 						</div>
 					)}
-					{prev && <p class="d-prev"><a href={prev.href}>← 前のページ：{prev.label}</a></p>}
+					{prev && <p class="d-prev"><a href={prev.href}>← 前のページ：{prev.title}</a></p>}
 				</div>
 			) : (
 				<div class="d-content d-members-only">

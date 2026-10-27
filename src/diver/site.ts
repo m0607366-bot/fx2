@@ -142,3 +142,14 @@ export function slugCandidates(slug: string): string[] {
 export function slugUrl(stored: string): string {
 	return `/${/%[0-9a-f]{2}/i.test(stored) ? stored : encodeURIComponent(stored)}/`;
 }
+
+/** 講習ページの順番（WordPress のメニュー menu1 の並び。次のページの案内に使う） */
+export const COURSE_ORDER = [
+	"level-0", "preparation", "securities", "ctrader", "tradingviewopend", "tradingview", "tradingview2", "tools", "pc",
+	"level-1", "books", "dowtheory", "elliottwave", "candlestick", "youtuber", "youtuber2",
+	"level-2", "line", "linedrawing",
+	"level-3", "handicraft", "details", "l1s1", "l3-3-l1", "l3-4-s1", "l5s5", "l3-3-l5", "l3-4-s5", "l6s6", "l3-3-l6", "l3-4-s6", "l7s7", "l3-3-l7", "l3-4-s7", "chartlong", "sinario", "xhartshort", "order",
+	"level-4", "replaytrade",
+	"level-5", "rotation", "realtrade", "diary", "blog-2", "ctradercount",
+	"level-6", "myfxbook", "fintokei", "takana", "takanashiki", "tri", "triangleexample",
+];

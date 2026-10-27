@@ -152,7 +152,17 @@ const MENU = await getSiteMenu();
 			</ul>
 			<p class="d-footer__copy">{SITE.copyright}</p>
 		</footer>
-		<a href="#" class="d-totop" aria-label="ページの先頭へ">▲</a>
+		<a href="#" class="d-totop" id="d-totop" aria-label="ページの先頭に戻る">▲<span>先頭に戻る</span></a>
+		<script is:inline>
+			(() => {
+				const b = document.getElementById("d-totop");
+				if (!b) return;
+				const f = () => b.classList.toggle("is-show", window.scrollY > 300);
+				window.addEventListener("scroll", f, { passive: true });
+				f();
+				b.addEventListener("click", (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+			})();
+		</script>
 		<Lightbox />
 		<EmDashBodyEnd page={pageCtx} />
 	</body>
