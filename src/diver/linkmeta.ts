@@ -1,6 +1,7 @@
 // リンクカード用に、URLのタイトル・説明・画像を取り出す
 import { getEmDashEntry } from "emdash";
 import { excerptOf, slugCandidates } from "./site";
+import { pageLevel } from "./access";
 
 export interface LinkMeta {
 	url: string;
@@ -53,8 +54,8 @@ async function selfMeta(u: URL): Promise<LinkMeta | null> {
 				return {
 					url: u.toString(),
 					title: data.title ?? u.toString(),
-					description: excerptOf(data.content, 80),
-					image: data.featured_image?.src ?? firstImage(data.content),
+					description: pageLevel(data) === null ? excerptOf(data.content, 80) : `会員（Level.${pageLevel(data)}）向けのページです`,
+					image: pageLevel(data) === null ? (data.featured_image?.src ?? firstImage(data.content)) : undefined,
 					site: "FX講習用サイト",
 				};
 			}

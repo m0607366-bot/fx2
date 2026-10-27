@@ -5,6 +5,7 @@ import { PortableText } from "emdash/ui";
 import Layout from "../../diver/Layout.astro";
 import Breadcrumb from "../../diver/Breadcrumb.astro";
 import { SITE, slugCandidates, slugUrl } from "../../diver/site";
+import { checkAccess, pageLevel } from "../../diver/access";
 
 const slug = decodeSlug(Astro.params.slug);
 if (!slug) return Astro.rewrite("/404");
@@ -25,7 +26,15 @@ if (!page) return Astro.rewrite("/404");
 if (!isPreview && Astro.originPathname.startsWith("/pages/")) {
 	return Astro.redirect(slugUrl(stored), 301);
 }
-if (!isPreview && Astro.cache?.enabled) Astro.cache.set(cacheHint);
+// 会員限定のページ: 見られる人だけに本文を出す。見た人によって中身が変わるので、保存（キャッシュ）しない
+const restricted = pageLevel(page.data) !== null;
+const access = restricted ? await checkAccess(page.data, Astro.locals.user) : { allowed: true as const };
+let sorry: any = null;
+if (restricted) {
+	if (Astro.cache?.enabled) Astro.cache.set(false);
+	Astro.response.headers.set("Cache-Control", "private, no-store");
+	if (!access.allowed) sorry = (await getEmDashEntry("pages", (SITE as any).sorryPage ?? "sorry")).entry;
+} else if (!isPreview && Astro.cache?.enabled) Astro.cache.set(cacheHint);
 
 const seo = getSeoMeta(page, { siteTitle: SITE.title, siteUrl: Astro.url.origin, path: slugUrl(stored) });
 ---
@@ -34,14 +43,30 @@ const seo = getSeoMeta(page, { siteTitle: SITE.title, siteUrl: Astro.url.origin,
 	title={page.data.title}
 	description={seo.description}
 	canonical={seo.canonical}
-	robots={seo.robots}
+	robots={restricted ? "noindex, nofollow" : seo.robots}
 	content={{ collection: "pages", id: page.data.id, slug }}
 >
 	<Breadcrumb items={[{ label: page.data.title }]} />
 	<article class="d-card d-page">
 		<h1 class="d-article__title" {...page.edit.title}>{page.data.title}</h1>
-		<div class="d-content" {...page.edit.content}>
-			<PortableText value={page.data.content} components={ptComponents} />
-		</div>
+		{
+			access.allowed ? (
+				<div class="d-content" {...page.edit.content}>
+					<PortableText value={page.data.content} components={ptComponents} />
+				</div>
+			) : (
+				<div class="d-content d-members-only">
+					<p class="d-members-only__note">
+						{access.reason === "login"
+							? `このページは会員（Level.${access.level}）向けです。会員の方はログインしてからご覧ください。`
+							: `このページは Level.${access.level} の会員向けです。まだこのレベルは開いていません。`}
+					</p>
+					{access.reason === "login" && (
+						<p><a class="d-members-only__login" href={`/_emdash/admin/login?redirect=${encodeURIComponent(Astro.url.pathname)}`}>会員ログイン（メールでログインのリンクが届きます）</a></p>
+					)}
+					{sorry && <PortableText value={sorry.data.content} components={ptComponents} />}
+				</div>
+			)
+		}
 	</article>
 </Layout>

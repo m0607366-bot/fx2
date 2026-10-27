@@ -4,10 +4,20 @@ import { search } from "emdash";
 import Layout from "../diver/Layout.astro";
 import Breadcrumb from "../diver/Breadcrumb.astro";
 
+import { getDb } from "emdash/runtime";
+import { sql } from "kysely";
+
 const query = Astro.url.searchParams.get("q")?.trim() || "";
-const { items: results } = query
+const { items: found } = query
 	? await search(query, { collections: ["posts", "pages"], limit: 30 })
 	: { items: [] as any[] };
+// 会員限定のページは、題名だけ出して本文の抜き出し（snippet）は出さない
+let restricted = new Set<string>();
+try {
+	const r = await sql<{ slug: string }>`SELECT slug FROM ec_pages WHERE member_level IS NOT NULL AND member_level != ''`.execute(await getDb());
+	restricted = new Set(r.rows.map((x) => x.slug));
+} catch {}
+const results = found.map((r: any) => (restricted.has(r.slug) ? { ...r, snippet: null, title: `${r.title ?? ""}（会員限定）` } : r));
 ---
 
 <Layout title={query ? `「${query}」の検索結果` : "検索"} robots="noindex">
