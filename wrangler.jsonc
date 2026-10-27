@@ -4,7 +4,7 @@
 	"main": "./src/worker.ts",
 	// 本番ドメイン（Cloudflareのカスタムドメイン）は切り替えのときに下の1行のコメント（//）を外す。仮のアドレス（workers.dev）も残す（管理画面のログイン移行に使う）
 	"workers_dev": true,
-	// "routes": [{ "pattern": "fx2.iwonderful.okinawa", "custom_domain": true }],
+	"routes": [{ "pattern": "fx2.iwonderful.okinawa", "custom_domain": true }],
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": [
 		"nodejs_compat"
