@@ -6,6 +6,8 @@ import Layout from "../../diver/Layout.astro";
 import Breadcrumb from "../../diver/Breadcrumb.astro";
 import { SITE, slugCandidates, slugUrl } from "../../diver/site";
 import { checkAccess, pageLevel } from "../../diver/access";
+import { getSiteMenu } from "../../diver/menu";
+import LinkCard from "../../diver/LinkCard.astro";
 
 const slug = decodeSlug(Astro.params.slug);
 if (!slug) return Astro.rewrite("/404");
@@ -36,6 +38,36 @@ if (restricted) {
 	if (!access.allowed) sorry = (await getEmDashEntry("pages", (SITE as any).sorryPage ?? "sorry")).entry;
 } else if (!isPreview && Astro.cache?.enabled) Astro.cache.set(cacheHint);
 
+// 講習のページ: メニューの並び順で「次はこのページへ」（カード）と「前のページ」を出す
+let nextHref: string | null = null;
+let nextLabel = "";
+let prev: { href: string; label: string } | null = null;
+if (restricted && access.allowed) {
+	const flat: Array<{ href: string; label: string }> = [];
+	const walk = (items: any[]) => {
+		for (const it of items) {
+			if (it.href && it.href.startsWith("/") && it.href !== "/" && !flat.some((f) => f.href === it.href)) flat.push({ href: it.href, label: it.label });
+			if (it.children) walk(it.children);
+		}
+	};
+	walk(await getSiteMenu());
+	const here = slugUrl(stored);
+	const i = flat.findIndex((f) => f.href === here || decodeURI(f.href) === decodeURI(here));
+	if (i >= 0) {
+		if (i > 0) prev = flat[i - 1];
+		// 次の講習ページ（会員レベルのあるページ）を探す
+		for (const f of flat.slice(i + 1)) {
+			const s = f.href.replace(/^\/|\/$/g, "");
+			const { entry } = await getEmDashEntry("pages", s);
+			const lv = entry ? pageLevel(entry.data) : null;
+			if (lv === null) continue;
+			nextHref = f.href;
+			nextLabel = lv === pageLevel(page.data) ? "次はこのページに進みましょう" : `次は Level.${lv} です`;
+			break;
+		}
+	}
+}
+
 const seo = getSeoMeta(page, { siteTitle: SITE.title, siteUrl: Astro.url.origin, path: slugUrl(stored) });
 ---
 
@@ -53,6 +85,13 @@ const seo = getSeoMeta(page, { siteTitle: SITE.title, siteUrl: Astro.url.origin,
 			access.allowed ? (
 				<div class="d-content" {...page.edit.content}>
 					<PortableText value={page.data.content} components={ptComponents} />
+					{nextHref && (
+						<div class="d-next">
+							<p class="d-next__label">{nextLabel}</p>
+							<LinkCard url={`${Astro.url.origin}${nextHref}`} />
+						</div>
+					)}
+					{prev && <p class="d-prev"><a href={prev.href}>← 前のページ：{prev.label}</a></p>}
 				</div>
 			) : (
 				<div class="d-content d-members-only">

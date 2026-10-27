@@ -315,3 +315,8 @@ ul, ol { margin: 0; padding: 0; }
 /* 会員限定のページ（見られない人向けの案内） */
 .d-members-only__note { padding: 14px 16px; background: #fff7e6; border: 1px solid #f0c36d; border-radius: 6px; font-weight: 600; }
 .d-members-only__login { display: inline-block; padding: 10px 18px; background: var(--d-accent); color: #fff !important; border-radius: 4px; text-decoration: none !important; }
+
+/* 講習のページの「次はこのページに進みましょう」 */
+.d-next { margin: 2.5em 0 1em; padding-top: 1.2em; border-top: 2px solid #e5e5e5; }
+.d-next__label { font-weight: 700; margin: 0 0 .6em; }
+.d-prev { margin: .5em 0 0; font-size: .9em; }
